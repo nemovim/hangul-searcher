@@ -1,0 +1,31 @@
+{
+  "name": "hangul-search",
+  "version": "1.0.0",
+  "description": "A search engine for Hangul",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nemovim/hangul-search.git"
+  },
+  "keywords": [
+    "hangul",
+    "search",
+    "korean",
+    "engine"
+  ],
+  "author": "nemovim",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nemovim/hangul-search/issues"
+  },
+  "homepage": "https://github.com/nemovim/hangul-search#readme",
+  "dependencies": {
+    "chosung": "^2.0.2",
+    "hangul-js": "^0.2.6",
+    "minisearch": "^6.1.0"
+  }
+}
