@@ -21,55 +21,26 @@ export default class HangulSearcher {
             prev.push({
                 id: document.id,
                 title: disassembledTitle,
-                text: Hangul.disassembleToString(document.text),
+                text: disassembledTitle,
+                // text: Hangul.disassembleToString(document?.text),
             });
             return prev;
         }, []);
         this.#miniSearch = new MiniSearch({
-            fields: ['title', 'text'],
+            // fields: ['title', 'text'],
+            fields: ['title'],
             storeFields: ['title'],
         });
         this.#miniSearch.addAll(this.#documentArr);
     }
 
-    assemble(document) {
-        Object.keys(document).forEach((field) => {
-            document[field] = Hangul.assemble(document[field]);
+    search(word, fuzzy = 1) {
+        let result = this.#miniSearch.search(Hangul.disassembleToString(word), { fuzzy: fuzzy });
+        return result.map((doc) => {
+            doc.title = Hangul.assemble(doc.title);
+            doc.terms = Hangul.assemble(doc.terms);
+            return doc;
         });
-        return document;
-    }
-
-    // disassemble(document) {
-    //     Object.keys(document).forEach((field) => {
-    //         document[field] = Hangul.disassembleToString(document[field]);
-    //     });
-    //     return document;
-    // }
-
-    // add(document) {
-    //     this.#miniSearch.add(this.disassemble(document));
-    // }
-
-    // addAll(documentArr) {
-    //     let documents = documentArr.map((document) => {
-    //         return this.disassemble(document);
-    //     });
-    //     this.#miniSearch.addAll(documents);
-    // }
-
-    // remove(document) {
-    //     this.#miniSearch.remove(this.disassemble(document));
-    // }
-
-    // removeAll(documentArr) {
-    //     let documents = documentArr.map((document) => {
-    //         return this.disassemble(document);
-    //     });
-    //     this.#miniSearch.removeAll(documents);
-    // }
-
-    search(word, fuzzy) {
-        return this.assemble(this.#miniSearch.search(word, { fuzzy: fuzzy }));
     }
 
     autoComplete(_word) {
