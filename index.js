@@ -1,78 +1,111 @@
-import Hangul from 'hangul-js';
 import MiniSearch from 'minisearch';
-import Chosung from 'chosung';
+import { disassemble, getChoseong } from 'es-hangul';
 
 export default class HangulSearcher {
-    #miniSearch;
+    #searcher;
 
-    #titleArr = [];
-    #chosungArr = [];
-    #documentArr = [];
+    #originalArr = [];
+    #disassembledArr = [];
+    #choseongArr = [];
 
-    /** documentArr = [document1, document2, ...]
-     * document = { id: 1, title: 'abc', text: 'def' }
-     */
-    constructor(documentArr) {
-        this.#documentArr = documentArr.reduce((prev, document) => {
-            let disassembledTitle = Hangul.disassembleToString(document.title);
-            let chosungTitle = Chosung.getChosung(document.title);
-            this.#chosungArr.push(chosungTitle);
-            this.#titleArr.push(disassembledTitle);
+    #encoder;
+
+    #encode(string) {
+        return string
+            .split('')
+            .map(
+                (c) =>
+                    '0x' +
+                    Array.from(this.#encoder.encode(c))
+                        .map((utf8) => utf8.toString(16))
+                        .join('')
+            )
+            .join('');
+    }
+
+    constructor(stringArr) {
+        this.#encoder = new TextEncoder();
+        this.#originalArr = stringArr.toSorted();
+
+        const documentArr = this.#originalArr.reduce((prev, original, i) => {
+            const disassembled = disassemble(original);
+            const choseong = getChoseong(original);
+
+            this.#disassembledArr.push(disassembled.replaceAll(' ', ''));
+            this.#choseongArr.push(choseong.replaceAll(' ', ''));
+
             prev.push({
-                id: document.id,
-                title: disassembledTitle,
-                text: disassembledTitle,
-                // text: Hangul.disassembleToString(document?.text),
+                id: i,
+                original,
+                disassembled: this.#encode(disassembled),
             });
+
             return prev;
         }, []);
-        this.#miniSearch = new MiniSearch({
-            // fields: ['title', 'text'],
-            fields: ['title'],
-            storeFields: ['title'],
+
+        this.#searcher = new MiniSearch({
+            fields: ['original', 'disassembled'],
+            storeFields: ['original'],
+            tokenize: (string, _fieldName) => string.split('0x'),
         });
-        this.#miniSearch.addAll(this.#documentArr);
+
+        this.#searcher.addAll(documentArr);
     }
 
-    search(word, fuzzy = 1) {
-        let result = this.#miniSearch.search(Hangul.disassembleToString(word), { fuzzy: fuzzy });
-        return result.map((doc) => {
-            doc.title = Hangul.assemble(doc.title);
-            doc.terms = Hangul.assemble(doc.terms);
-            return doc;
-        });
-    }
-
-    autoComplete(_word) {
-        let word = Hangul.disassembleToString(_word);
-        if (Hangul.isChoAll(word)) {
-            return this.chosungComplete(word);
+    search(query, option = {}) {
+        const idx = this.#originalArr.indexOf(query);
+        if (idx !== -1) {
+            return [this.#originalArr[idx]];
         } else {
-            return this.wordComplete(word);
+            return this.#searcher.search(
+                this.#encode(disassemble(query)),
+                option
+            );
         }
     }
 
-    chosungComplete(chosung) {
-        let reg = new RegExp(chosung);
-        let resultArr = this.#chosungArr.reduce((prev, chosungTitle, index) => {
-            if (chosungTitle.search(reg) !== -1) {
-                prev.push(Hangul.assemble(this.#titleArr[index]));
-            }
-            return prev;
-        }, []);
-        resultArr.sort();
+    autoComplete(query) {
+        query = query.replaceAll(' ', '');
+        let resultArr = [];
+        let resultSet;
+        if (query === '') {
+            resultArr = this.#originalArr.toSorted();
+        } else {
+            resultArr = this.#wordComplete(disassemble(query));
+            resultSet = new Set(resultArr);
+            this.#choseongComplete(getChoseong(query)).forEach((string) => {
+                if (!resultSet.has(string)) {
+                    resultSet.add(string);
+                    resultArr.push(string);
+                }
+            });
+        }
         return resultArr;
     }
 
-    wordComplete(word) {
-        let reg = new RegExp(word);
-        let resultArr = this.#titleArr.reduce((prev, title) => {
-            if (title.search(reg) !== -1) {
-                prev.push(Hangul.assemble(title));
-            }
-            return prev;
-        }, []);
-        resultArr.sort();
-        return resultArr;
+    #choseongComplete(query, type) {
+        return this.#choseongArr
+            .reduce((prev, choseong, index) => {
+                if (
+                    choseong !== '' &&
+                    query !== '' &&
+                    choseong.startsWith(query)
+                ) {
+                    prev.push(this.#originalArr[index]);
+                }
+                return prev;
+            }, [])
+            .toSorted();
+    }
+
+    #wordComplete(query, type) {
+        return this.#disassembledArr
+            .reduce((prev, disassembled, index) => {
+                if (disassembled.startsWith(query)) {
+                    prev.push(this.#originalArr[index]);
+                }
+                return prev;
+            }, [])
+            .toSorted();
     }
 }
