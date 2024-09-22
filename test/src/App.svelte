@@ -1,20 +1,7 @@
 <script>
     import wordArr from './wordArr.js';
     import HangulSearcher from 'hangul-search';
-    const stringArr = [
-        '한글',
-        '검색',
-        '자동',
-        '오이',
-        '완성',
-        '완제품',
-        '왕',
-        '여왕',
-        'foo',
-        'bar',
-        '한글 검색',
-    ];
-    const hangulSearcher = new HangulSearcher(stringArr);
+    const hangulSearcher = new HangulSearcher(wordArr);
 
     let autoResult;
     let searchResult;
