@@ -1,6 +1,6 @@
 {
-  "name": "hangul-search",
-  "version": "1.0.0",
+  "name": "hangul-searcher",
+  "version": "1.0.1",
   "description": "A module for searching and auto completing Hangul.",
   "main": "index.js",
   "type": "module",
@@ -16,7 +16,11 @@
     "search",
     "korean",
     "automatic",
-    "complete"
+    "complete",
+    "한글",
+    "검색",
+    "자동",
+    "완성"
   ],
   "author": "nemovim",
   "license": "MIT",

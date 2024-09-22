@@ -1,6 +1,6 @@
 <script>
     import wordArr from './wordArr.js';
-    import HangulSearcher from 'hangul-search';
+    import HangulSearcher from 'hangul-searcher';
     const hangulSearcher = new HangulSearcher(wordArr);
 
     let autoResult;
