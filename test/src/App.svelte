@@ -14,7 +14,7 @@
     }
 </script>
 
-<h1>Hangul-Search Demo Site</h1>
+<h1>Hangul-Searcher Demo Site</h1>
 <div id="input-div">
     <input
         id="search-input"

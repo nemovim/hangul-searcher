@@ -1,8 +1,9 @@
 # Hangul Searcher
 Hangul-Searcher는 한글 검색 및 자동 완성을 위한 JS 모듈입니다. 텍스트 배열을 받아 생성한 인스턴스를 통해 검색 및 자동 완성을 수행합니다. 자동 완성은 초성 검색도 고려합니다.
 
+Test the Hangul-Searcher on this [Demo Website](https://hangul-searcher.vercel.app)!
 
-Hangul Search is a search and automatic completion module for Hangul. It is based on `es-hangul` and `minisearch` modules.
+Hangul-Searcher is a search and automatic completion module for Hangul. It is based on `es-hangul` and `minisearch` modules.
 
 ## Installation
 ```bash
@@ -11,7 +12,7 @@ $ npm install hangul-search
 
 ## Usage
 ```js
-import HangulSearcher from 'hangul-search';
+import HangulSearcher from 'hangul-searcher';
 const stringArr = ['한글', '검색', '자동', '오이', '완성', '완제품', '왕', '여왕', 'foo', 'bar', '한글 검색'];
 const hangulSearcher = new HangulSearcher(stringArr);
 ```
