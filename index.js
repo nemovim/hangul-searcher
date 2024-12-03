@@ -1,14 +1,15 @@
 import MiniSearch from 'minisearch';
 import { disassemble, getChoseong } from 'es-hangul';
+import { getRegExp } from 'korean-regexp';
 
 export default class HangulSearcher {
+    searchOption;
+    autoOption;
+
     #searcher;
 
     #originalArr = [];
-    #disassembledArr = [];
     #choseongArr = [];
-
-    #encoder;
 
     #encode(string) {
         return string
@@ -16,32 +17,22 @@ export default class HangulSearcher {
             .map(
                 (c) =>
                     '0x' +
-                    Array.from(this.#encoder.encode(c))
+                    Array.from(new TextEncoder().encode(c))
                         .map((utf8) => utf8.toString(16))
                         .join('')
             )
             .join('');
     }
 
-    constructor(stringArr) {
-        this.#encoder = new TextEncoder();
+    constructor(
+        stringArr,
+        searchOption = {},
+        autoOption = { startsWithQuery: true, alwaysUsesChoseong: true }
+    ) {
+        this.searchOption = searchOption;
+        this.autoOption = autoOption;
+
         this.#originalArr = stringArr.toSorted();
-
-        const documentArr = this.#originalArr.reduce((prev, original, i) => {
-            const disassembled = disassemble(original);
-            const choseong = getChoseong(original);
-
-            this.#disassembledArr.push(disassembled.replaceAll(' ', ''));
-            this.#choseongArr.push(choseong.replaceAll(' ', ''));
-
-            prev.push({
-                id: i,
-                original,
-                disassembled: this.#encode(disassembled),
-            });
-
-            return prev;
-        }, []);
 
         this.#searcher = new MiniSearch({
             fields: ['original', 'disassembled'],
@@ -49,63 +40,76 @@ export default class HangulSearcher {
             tokenize: (string, _fieldName) => string.split('0x'),
         });
 
+        const documentArr = this.#originalArr.reduce((prev, original, i) => {
+            this.#choseongArr.push(
+                disassemble(getChoseong(original)).replaceAll(' ', '')
+            );
+
+            prev.push({
+                id: i,
+                original,
+                disassembled: this.#encode(disassemble(original)),
+            });
+
+            return prev;
+        }, []);
+
         this.#searcher.addAll(documentArr);
     }
 
-    search(query, option = {}) {
-        const idx = this.#originalArr.indexOf(query);
-        if (idx !== -1) {
-            return [this.#originalArr[idx]];
-        } else {
-            return this.#searcher.search(
-                this.#encode(disassemble(query)),
-                option
-            );
-        }
+    search(query, option = undefined) {
+        option ??= this.searchOption;
+        if (this.#originalArr.indexOf(query) !== -1) return [query];
+        return this.#searcher.search(this.#encode(disassemble(query)), option);
     }
 
-    autoComplete(query) {
+    autoComplete(query, option = undefined) {
+        option ??= this.autoOption;
+        this.autoOption.startsWithQuery ??= true;
+        this.autoOption.alwaysUsesChoseong ??= true;
+
         query = query.replaceAll(' ', '');
-        let resultArr = [];
-        let resultSet;
-        if (query === '') {
-            resultArr = this.#originalArr.toSorted();
-        } else {
-            resultArr = this.#wordComplete(disassemble(query));
-            resultSet = new Set(resultArr);
-            this.#choseongComplete(getChoseong(query)).forEach((string) => {
+        if (query === '') return this.#originalArr;
+
+        const re = new RegExp(
+            getRegExp(query, { startsWith: option.startsWithQuery })
+        );
+
+        const resultArr = this.#originalArr.filter(
+            (word) => word.search(re) !== -1
+        );
+
+        const resultSet = new Set(resultArr);
+
+        if (option.alwaysUsesChoseong || getChoseong(query) === query) {
+            this.#choseongComplete(
+                disassemble(getChoseong(query)),
+                option
+            ).forEach((string) => {
                 if (!resultSet.has(string)) {
                     resultSet.add(string);
                     resultArr.push(string);
                 }
             });
         }
+
         return resultArr;
     }
 
-    #choseongComplete(query, type) {
-        return this.#choseongArr
-            .reduce((prev, choseong, index) => {
-                if (
-                    choseong !== '' &&
-                    query !== '' &&
-                    choseong.startsWith(query)
-                ) {
-                    prev.push(this.#originalArr[index]);
-                }
-                return prev;
-            }, [])
-            .toSorted();
-    }
+    #choseongComplete(query, option) {
+        if (query === '') return [];
 
-    #wordComplete(query, type) {
-        return this.#disassembledArr
-            .reduce((prev, disassembled, index) => {
-                if (disassembled.startsWith(query)) {
-                    prev.push(this.#originalArr[index]);
-                }
-                return prev;
-            }, [])
-            .toSorted();
+        const re = new RegExp(query, 'i');
+
+        return this.#choseongArr.reduce((prev, choseong, index) => {
+            if (choseong === '') return prev;
+            if (
+                (option.startsWithQuery && choseong.startsWith(query)) ||
+                (!option.startsWithQuery && choseong.search(re) !== -1)
+            ) {
+                prev.push(this.#originalArr[index]);
+            }
+            return prev;
+        }, []);
     }
 }
