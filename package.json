@@ -1,7 +1,7 @@
 {
-  "name": "auto-hangul",
+  "name": "hangul-searcher",
   "version": "1.0.4",
-  "description": "A module for auto completing Hangul.",
+  "description": "A module for searching and auto completing Hangul.",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nemovim/auto-hangul.git"
+    "url": "git+https://github.com/nemovim/hangul-searcher.git"
   },
   "keywords": [
     "Hangul",
@@ -25,9 +25,9 @@
   "author": "nemovim",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nemovim/auto-hangul/issues"
+    "url": "https://github.com/nemovim/hangul-searcher/issues"
   },
-  "homepage": "https://github.com/nemovim/auto-hangul#readme",
+  "homepage": "https://github.com/nemovim/hangul-searcher#readme",
   "dependencies": {
     "es-hangul": "^2.1.0",
     "korean-regexp": "^1.0.13",
