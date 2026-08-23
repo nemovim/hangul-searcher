@@ -1,68 +1,137 @@
 # Hangul Searcher
-Hangul-Searcher는 한글 검색 및 자동 완성을 위한 JS 모듈입니다. 텍스트 배열을 받아 생성한 인스턴스를 통해 검색 및 자동 완성을 수행합니다. 자동 완성은 초성 검색도 가능하며, 기타 옵션을 통해 원하는 방식의 자동 완성을 구현할 수 있습니다. 아래의 데모 웹사이트를 통해 기능들을 한눈에 확인할 수 있습니다.
 
-Test the Hangul-Searcher on this [Demo Website](https://hangul-searcher.vercel.app)!
+[![npm version](https://img.shields.io/npm/v/hangul-searcher.svg)](https://www.npmjs.com/package/hangul-searcher)
+[![npm downloads](https://img.shields.io/npm/dm/hangul-searcher.svg)](https://www.npmjs.com/package/hangul-searcher)
 
-Hangul-Searcher is a search and automatic completion module for Hangul. It is based on `es-hangul`, `korean-regexp`, and `minisearch` modules.
+[English version](./README.en.md)
 
-## Installation
+[데모 웹사이트](https://hangul-searcher.vercel.app)
+
+한글 검색과 자동완성을 위한 JavaScript 모듈입니다. 한글 초성 검색을 지원하며, 한글이 아닌 문자열도 함께 처리할 수 있습니다.
+
+내부적으로 [`es-hangul`](https://github.com/toss/es-hangul), [`korean-regexp`](https://github.com/kimyongseok/korean-regexp), [`MiniSearch`](https://github.com/lucaong/minisearch)를 사용합니다.
+
+## 설치
+
 ```bash
-$ npm install hangul-searcher
+npm install hangul-searcher
 ```
 
-## Usage
-```js
-import HangulSearcher from 'hangul-searcher';
-const stringArr = ['한글', '검색', '자동', '오이', '완성', '완제품', '왕', '여왕', 'foo', 'bar', '한글 검색'];
-const hangulSearcher = new HangulSearcher(stringArr);
-```
-The strings do not have to be all Hangul.
-
-## Search
-```js
-hangulSearcher.search('한글'); // ['한글']
-```
-When the query is exactly matched, it returns an array with the query itself.
+## 기본 사용법
 
 ```js
-hangulSearcher.search('한');
-/* [{ original: '한글', score: 13.xx, ... },
-    { original: '한글 검색', score: 11.xx, ... },
-     ...
-    { original: '자동', score: 1.xx, ... }] */
-```
-When the query is not matched, it returns an array with the result objects. Each object has `original` and `score` keys (It has other keys, but it would not be meaningful for Hangul.). The `original` value is the result text, and the `score` value is the score measured by how much the query and result text are matched.
+import HangulSearcher from "hangul-searcher";
 
-The search function can receive the `minisearch` options as an argument.
-```js
-hangulSearcher.search('한글', { fuzzy: 2 });
-```
-Or the option can be set when instantiating the hangulSearcher.
-```js
-const hangulSearcher = new HangulSearcher(stringArr, { fuzzy: 3 });
-```
-*Hangul searcher searches words by formatting Hangul words (i.e., one Hangul character is converted to more than three characters). Therefore, the fuzzy option would not be effective. In other words, the fuzzy option is already applied to the Hangul searcher by default.*
+const words = [
+  "한글",
+  "검색",
+  "자동",
+  "오이",
+  "완성",
+  "완제품",
+  "왕",
+  "여왕",
+  "foo",
+  "bar",
+  "한글 검색",
+];
 
-## Auto Completion
+const searcher = new HangulSearcher(words);
+```
+
+## 검색
+
+검색어가 배열의 문자열과 정확히 일치하면 해당 문자열 하나를 반환합니다.
+
 ```js
-hangulSearcher.autoComplete('와', {
+searcher.search("한글");
+// ["한글"]
+```
+
+정확히 일치하지 않으면 MiniSearch의 검색 결과 객체 배열을 반환합니다.
+
+```js
+searcher.search("한");
+// [
+//   { original: "한글", score: 13.15, ... },
+//   { original: "한글 검색", score: 11.19, ... },
+//   ...
+// ]
+```
+
+결과 객체의 `original`은 원본 문자열이고, `score`는 검색어와의 관련도입니다. 점수와 결과 순서는 입력 데이터와 MiniSearch 버전에 따라 달라질 수 있습니다.
+
+검색 시 MiniSearch 옵션을 전달할 수 있습니다.
+
+```js
+searcher.search("한글", { fuzzy: 2 });
+```
+
+생성할 때 기본 검색 옵션으로 지정할 수도 있습니다.
+
+```js
+const searcher = new HangulSearcher(words, { fuzzy: 3 });
+```
+
+## 자동완성
+
+```js
+searcher.autoComplete("와", {
   startsWithQuery: true,
   alwaysUsesChoseong: false,
-}); // ['완성', '완제품', '왕']
+});
+// ["완성", "완제품", "왕"]
 ```
-Auto completion has two options: `startsWithQuery` and `alwaysUsesChoseong`. These options can be set in two ways below like the search options.
+
+자동완성 옵션은 생성자 또는 `autoComplete` 호출 시 지정할 수 있습니다. 일부 옵션만 전달하면 나머지는 기본값 또는 생성자에서 지정한 값을 사용합니다.
+
 ```js
-const hangulSearcher = new HangulSearcher(stringArr, { fuzzy: 3 }, { startsWithQuery: true });
-// To set the auto completion option while instantiating, the search option must be in front of the auto completion option. If you do not need the search options, just set an empty object.
-hangulSearcher.autoComplete('와', { alwaysUsesChoseong: false });
+const searcher = new HangulSearcher(words, {}, {
+  startsWithQuery: true,
+});
+
+searcher.autoComplete("와", {
+  alwaysUsesChoseong: false,
+});
 ```
 
-If `startsWithQuery` is true, the results always start with the query. The default is `true`.
-* startsWithQuery: true & query: 안 --> result: **아나**운서, **안**경, ...
-* startsWithQuery: false & query: 안 --> result: 그동**안**, 달**아나**다, ...
+### `startsWithQuery`
 
-If `alwaysUsesChoseong` is true, both the query and the choseong of the query will be the input of auto completion. If the option is false, only the query will be the input. The default is `true`.
-* alwaysUsesChoseong: true & query: 안녕 --> result: 안녕, 안녕하다, 아내, 아니, ...
-* alwaysUsesChoseong: false & query: 안녕 --> result: 안녕, 안녕하다, ...
+기본값은 `true`입니다. `korean-regexp`의 한글 매칭 규칙을 사용해 검색어가 문자열의 앞부분에 해당하는 결과를 우선적으로 찾습니다.
 
-You can test it on [Demo Website](https://hangul-searcher.vercel.app). It would help understand how the options work.
+```js
+searcher.autoComplete("안", { startsWithQuery: true });
+// 예: "안경", "아나운서" ...
+
+searcher.autoComplete("안", { startsWithQuery: false });
+// 문자열 중간에 검색어가 해당하는 결과도 포함
+```
+
+### `alwaysUsesChoseong`
+
+기본값은 `true`입니다. 입력한 검색어와 검색어의 초성을 모두 자동완성에 사용합니다.
+
+```js
+searcher.autoComplete("안녕", { alwaysUsesChoseong: true });
+// "안녕", "안녕하다", "아내", "아니" ...
+
+searcher.autoComplete("안녕", { alwaysUsesChoseong: false });
+// "안녕", "안녕하다" ...
+```
+
+초성만 입력한 경우에는 `alwaysUsesChoseong: false`여도 초성 검색이 수행됩니다.
+
+## 자동완성 기본값
+
+옵션을 지정하지 않으면 다음 값이 사용됩니다.
+
+```js
+{
+  startsWithQuery: true,
+  alwaysUsesChoseong: true,
+}
+```
+
+## 라이선스
+
+MIT
