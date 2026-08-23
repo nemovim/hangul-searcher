@@ -26,18 +26,17 @@
     let searchResult;
 
     let query = '';
-    let re;
 
     let t;
     let dtArr = [0, 0, 0, 0];
 
     $: {
         for (let k = 0; k < 4; k++) {
-            t = new Date().getTime();
+            t = performance.now();
             for (let i = 0; i < 50; i++) {
                 autoResultArr[k] = hangulSearcherArr[k].autoComplete(query);
             }
-            dtArr[k] = new Date().getTime() - t;
+            dtArr[k] = performance.now() - t;
             autoResultArr[k] = autoResultArr[k].slice(0, 15);
         }
 
@@ -72,7 +71,7 @@
                 {/each}
             {/if}
             <br>
-            <p style="font-size: 0.8rem">Time taken for 50 times: {dtArr[i]}ms</p>
+            <p style="font-size: 0.8rem">Time taken for 50 times: {dtArr[i].toFixed(2)}ms</p>
         </div>
     {/each}
     <div>
@@ -101,8 +100,8 @@
     }
 
     #container {
-        display: flex;
-        justify-content: space-around;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
     }
 
     #search-input {

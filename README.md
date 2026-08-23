@@ -45,7 +45,10 @@ const hangulSearcher = new HangulSearcher(stringArr, { fuzzy: 3 });
 
 ## Auto Completion
 ```js
-hangulSearcher.autoComplete('와'); // ['완성', '완제품', '왕', '여왕', '오이']
+hangulSearcher.autoComplete('와', {
+  startsWithQuery: true,
+  alwaysUsesChoseong: false,
+}); // ['완성', '완제품', '왕']
 ```
 Auto completion has two options: `startsWithQuery` and `alwaysUsesChoseong`. These options can be set in two ways below like the search options.
 ```js
